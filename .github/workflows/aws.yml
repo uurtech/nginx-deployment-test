@@ -23,7 +23,7 @@ jobs:
       with:
         aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: ${{ env.MY_AWS_REGION }}
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -38,9 +38,9 @@ jobs:
         # Build a docker container and
         # push it to ECR so that it can
         # be deployed to ECS.
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        docker build -t $MY_ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $MY_ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$MY_ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
     - name: Download task definition
       run: |
@@ -51,13 +51,13 @@ jobs:
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: task-definition.json
-        container-name: my-container
+        container-name: $ {{ env.MY_CONTAINER_NAME }}
         image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: my-service
-        cluster: my-cluster
+        service: $ {{ env.MY_ECS_SERVICE }}
+        cluster: $ {{ env.MY_ECS_CLUSTER }}
         wait-for-service-stability: true
